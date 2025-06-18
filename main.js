@@ -1,7 +1,26 @@
+// Firebase imports
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, collection, setDoc, doc, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut,
+  GoogleAuthProvider,
+  signInWithPopup
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  getFirestore,
+  collection,
+  setDoc,
+  doc,
+  getDocs,
+  query,
+  orderBy,
+  limit
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+// Firebase Config
 const firebaseConfig = {
   apiKey: "AIzaSyDCegRtUMSNTtNeDsFt8AbY3h5oxzIujdw",
   authDomain: "superime-miners.firebaseapp.com",
@@ -15,6 +34,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// 🔐 Auth Functions
 function login() {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
@@ -56,6 +76,7 @@ function logout() {
   });
 }
 
+// 🔄 State Listener
 onAuthStateChanged(auth, (user) => {
   if (user) {
     document.getElementById("authSection").style.display = "none";
@@ -67,6 +88,7 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
+// ⛏️ Mining Logic
 async function startMining() {
   const output = document.getElementById("output");
   const progressBar = document.getElementById("progressBar");
@@ -117,6 +139,7 @@ async function startMining() {
   }
 }
 
+// 🏆 Leaderboard
 async function loadLeaderboard() {
   const leaderboard = document.getElementById("leaderboard");
   leaderboard.textContent = "🏆 Leaderboard:\n";
@@ -129,9 +152,9 @@ async function loadLeaderboard() {
   });
 }
 
-// 🔓 Expose functions to global scope so HTML buttons can access them
-window.login = login;
-window.signup = signup;
-window.googleLogin = googleLogin;
-window.logout = logout;
-window.startMining = startMining;
+// 🔓 Bind Buttons to Functions
+document.getElementById("loginBtn").addEventListener("click", login);
+document.getElementById("signupBtn").addEventListener("click", signup);
+document.getElementById("googleLoginBtn").addEventListener("click", googleLogin);
+document.getElementById("logoutBtn").addEventListener("click", logout);
+document.getElementById("startMiningBtn").addEventListener("click", startMining);
