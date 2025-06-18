@@ -128,3 +128,10 @@ async function loadLeaderboard() {
     leaderboard.textContent += `${index + 1}. ${data.name} - ${data.points} pts (${data.time}s)\n`;
   });
 }
+
+// 🔓 Expose functions to global scope so HTML buttons can access them
+window.login = login;
+window.signup = signup;
+window.googleLogin = googleLogin;
+window.logout = logout;
+window.startMining = startMining;
