@@ -34,9 +34,11 @@
 
       <!-- 🪙 Coin Transfer Section -->
       <h2>Transfer Coins</h2>
-      <input type="email" id="transferTo" placeholder="Recipient Email" required>
-      <input type="number" id="transferAmount" placeholder="Amount" min="1" required>
-      <button id="sendBtn">Send Coins</button>
+      <form id="transferForm">
+        <input type="email" id="transferTo" placeholder="Recipient Email" required>
+        <input type="number" id="transferAmount" placeholder="Amount" min="1" required>
+        <button type="submit" id="sendBtn">Send Coins</button>
+      </form>
       <p id="transferStatus"></p>
 
       <!-- 🏆 Leaderboard -->
