@@ -5,20 +5,32 @@ body {
   text-align: center;
   padding: 2rem;
 }
+
 button {
   background-color: #00ff90;
   border: none;
   padding: 10px 20px;
-  font-size: 1.2rem;
+  font-size: 1rem;
   color: black;
   border-radius: 10px;
   cursor: pointer;
-  margin-bottom: 1rem;
-  transition: transform 0.1s;
+  margin: 0.5rem;
+  transition: transform 0.1s ease;
 }
+
 button:hover {
   transform: scale(1.05);
 }
+
+input {
+  padding: 8px;
+  font-size: 1rem;
+  border-radius: 8px;
+  border: none;
+  margin: 5px;
+  width: 250px;
+}
+
 #output, #leaderboard {
   white-space: pre-wrap;
   background: #1c1c1c;
@@ -28,19 +40,28 @@ button:hover {
   max-width: 600px;
   margin-left: auto;
   margin-right: auto;
+  text-align: left;
 }
+
 #progressContainer {
   width: 100%;
   max-width: 600px;
-  background-color: #2a2a2a;
-  border-radius: 10px;
-  overflow: hidden;
-  margin: auto;
-}
-#progressBar {
   height: 20px;
-  width: 0%;
-  background-color: #00ff90;
+  background-color: #333;
   border-radius: 10px;
-  transition: width 0.1s;
+  margin: 10px auto;
+  overflow: hidden;
+}
+
+#progressBar {
+  height: 100%;
+  background-color: #00ff90;
+  width: 0%;
+  transition: width 0.1s ease-in-out;
+}
+
+#balanceDisplay {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+  color: gold;
 }
