@@ -35,42 +35,127 @@
       margin-left: auto;
       margin-right: auto;
     }
+    #progressContainer {
+      width: 100%;
+      max-width: 600px;
+      background-color: #2a2a2a;
+      border-radius: 10px;
+      overflow: hidden;
+      margin: auto;
+    }
+    #progressBar {
+      height: 20px;
+      width: 0%;
+      background-color: #00ff90;
+      border-radius: 10px;
+      transition: width 0.1s;
+    }
   </style>
 </head>
 <body>
   <h1>🪙 Simple Crypto Simulator</h1>
-  <button onclick="startMining()">Start Mining</button>
-  <div id="output">Click the button to start.</div>
-  <div id="leaderboard"><strong>Leaderboard:</strong>\n</div>
 
-  <!-- Firebase (Optional for leaderboard) -->
+  <div id="authSection">
+    <input type="email" id="email" placeholder="Email"><br><br>
+    <input type="password" id="password" placeholder="Password"><br><br>
+    <button onclick="login()">Login</button>
+    <button onclick="signup()">Sign Up</button>
+    <button onclick="googleLogin()">Login with Google</button>
+    <p id="authStatus"></p>
+  </div>
+
+  <div id="miningSection" style="display:none;">
+    <button onclick="logout()">Logout</button><br><br>
+    <button onclick="startMining()">Start Mining</button>
+    <div id="progressContainer">
+      <div id="progressBar"></div>
+    </div>
+    <div id="output">Click the button to start.</div>
+    <div id="leaderboard"><strong>Leaderboard:</strong>\n</div>
+  </div>
+
+  <!-- Firebase with Auth & Firestore -->
   <script type="module">
-    // Firebase config
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getFirestore, collection, setDoc, doc, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDCegRtUMSNTtNeDsFt8AbY3h5oxzIujdw",
       authDomain: "superime-miners.firebaseapp.com",
       projectId: "superime-miners",
-      storageBucket: "superime-miners.firebasestorage.app",
+      storageBucket: "superime-miners.appspot.com",
       messagingSenderId: "57805313400",
       appId: "G-N3F9VECF1H"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const auth = getAuth();
 
-    // SHA256 mining logic
+    function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      signInWithEmailAndPassword(auth, email, password)
+        .then(() => {
+          document.getElementById("authStatus").textContent = "✅ Logged in!";
+        })
+        .catch(err => {
+          document.getElementById("authStatus").textContent = "❌ " + err.message;
+        });
+    }
+
+    function signup() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      createUserWithEmailAndPassword(auth, email, password)
+        .then(() => {
+          document.getElementById("authStatus").textContent = "✅ Account created!";
+        })
+        .catch(err => {
+          document.getElementById("authStatus").textContent = "❌ " + err.message;
+        });
+    }
+
+    function googleLogin() {
+      const provider = new GoogleAuthProvider();
+      signInWithPopup(auth, provider)
+        .then(() => {
+          document.getElementById("authStatus").textContent = "✅ Google login successful!";
+        })
+        .catch(err => {
+          document.getElementById("authStatus").textContent = "❌ " + err.message;
+        });
+    }
+
+    function logout() {
+      signOut(auth).then(() => {
+        document.getElementById("authStatus").textContent = "🔒 Logged out.";
+      });
+    }
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        document.getElementById("authSection").style.display = "none";
+        document.getElementById("miningSection").style.display = "block";
+      } else {
+        document.getElementById("authSection").style.display = "block";
+        document.getElementById("miningSection").style.display = "none";
+      }
+    });
+
     async function startMining() {
       const output = document.getElementById("output");
+      const progressBar = document.getElementById("progressBar");
       const leaderboard = document.getElementById("leaderboard");
       const encoder = new TextEncoder();
-      const targetPrefix = '000'; // Easier target
+      const targetPrefix = '000';
       let nonce = 0;
       let startTime = performance.now();
       let found = false;
       output.textContent = "Mining started...\n";
+      progressBar.style.width = "0%";
+      const maxNonce = 50000;
 
       while (!found) {
         const input = 'mine' + nonce;
@@ -81,24 +166,30 @@
         if (hashHex.startsWith(targetPrefix)) {
           let endTime = performance.now();
           const time = ((endTime - startTime) / 1000).toFixed(2);
-          const points = 1000 - Math.floor(nonce / 100); // simple point system
+          const points = 1000 - Math.floor(nonce / 100);
           output.textContent += `✅ Success!\nNonce: ${nonce}\nHash: ${hashHex}\nTime: ${time}s\nPoints Earned: ${points}`;
-          
-          const username = prompt("Enter your name for the leaderboard:");
-          if (username) {
-            await addDoc(collection(db, "miners"), {
-              name: username,
-              nonce: nonce,
-              time: time,
-              points: points,
-              date: new Date()
-            });
-            loadLeaderboard();
-          }
+
+          const user = auth.currentUser;
+          const userId = user.uid;
+          const username = user.email;
+
+          await setDoc(doc(db, "miners", userId), {
+            name: username,
+            nonce: nonce,
+            time: time,
+            points: points,
+            date: new Date()
+          });
+          loadLeaderboard();
           found = true;
         }
+
         nonce++;
-        if (nonce % 5000 === 0) await new Promise(r => setTimeout(r, 1));
+        if (nonce % 1000 === 0) {
+          const percent = Math.min((nonce / maxNonce) * 100, 100);
+          progressBar.style.width = `${percent}%`;
+          await new Promise(r => setTimeout(r, 1));
+        }
       }
     }
 
