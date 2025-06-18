@@ -18,7 +18,8 @@ import {
   getDocs,
   query,
   orderBy,
-  limit
+  limit,
+  addDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // Firebase Config
@@ -87,6 +88,7 @@ onAuthStateChanged(auth, async (user) => {
     document.getElementById("miningSection").style.display = "block";
     await showBalance();
     loadLeaderboard();
+    loadTransactions();
   } else {
     document.getElementById("authSection").style.display = "block";
     document.getElementById("miningSection").style.display = "none";
@@ -152,7 +154,6 @@ async function startMining() {
 
         await showBalance();
         await loadLeaderboard();
-
         found = true;
       }
 
@@ -164,11 +165,10 @@ async function startMining() {
       }
     }
 
-    await new Promise(r => setTimeout(r, 500)); // Delay before next block
+    await new Promise(r => setTimeout(r, 500));
   }
 }
 
-// ⛔ Stop mining
 function stopMining() {
   isMining = false;
   document.getElementById("output").textContent += "\n🛑 Mining stopped.";
@@ -191,10 +191,66 @@ async function loadLeaderboard() {
   });
 }
 
-// 🔘 Button Event Bindings
-document.getElementById("loginBtn").addEventListener("click", login);
-document.getElementById("signupBtn").addEventListener("click", signup);
-document.getElementById("googleLoginBtn").addEventListener("click", googleLogin);
-document.getElementById("logoutBtn").addEventListener("click", logout);
-document.getElementById("startMiningBtn").addEventListener("click", startMining);
-document.getElementById("stopMiningBtn").addEventListener("click", stopMining);
+// 💸 Send Coins
+async function sendCoins() {
+  const recipientEmail = document.getElementById("transferTo").value;
+  const amount = parseInt(document.getElementById("transferAmount").value);
+  const status = document.getElementById("transferStatus");
+  const user = auth.currentUser;
+  if (!user || !recipientEmail || isNaN(amount) || amount <= 0) {
+    status.textContent = "❌ Invalid input.";
+    return;
+  }
+
+  const senderRef = doc(db, "miners", user.uid);
+  const senderDoc = await getDoc(senderRef);
+  const senderBalance = senderDoc.exists() ? senderDoc.data().balance || 0 : 0;
+
+  if (senderBalance < amount) {
+    status.textContent = "❌ Insufficient balance.";
+    return;
+  }
+
+  const users = await getDocs(collection(db, "miners"));
+  let recipientId = null;
+  users.forEach(docSnap => {
+    if (docSnap.data().name === recipientEmail) {
+      recipientId = docSnap.id;
+    }
+  });
+
+  if (!recipientId) {
+    status.textContent = "❌ Recipient not found.";
+    return;
+  }
+
+  const recipientRef = doc(db, "miners", recipientId);
+  const recipientDoc = await getDoc(recipientRef);
+  const recipientBalance = recipientDoc.exists() ? recipientDoc.data().balance || 0 : 0;
+
+  await setDoc(senderRef, {
+    ...senderDoc.data(),
+    balance: senderBalance - amount
+  });
+
+  await setDoc(recipientRef, {
+    ...recipientDoc.data(),
+    balance: recipientBalance + amount
+  });
+
+  await addDoc(collection(db, "transactions"), {
+    from: user.email,
+    to: recipientEmail,
+    amount,
+    timestamp: new Date()
+  });
+
+  status.textContent = "✅ Transfer complete.";
+  await showBalance();
+  loadLeaderboard();
+  loadTransactions();
+}
+
+// 📜 Load Transactions
+async function loadTransactions() {
+  const list = document.getElementById("transactionHistory
