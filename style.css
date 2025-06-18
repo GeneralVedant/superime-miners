@@ -1,0 +1,46 @@
+body {
+  font-family: monospace;
+  background-color: #0e0e0e;
+  color: #00ff90;
+  text-align: center;
+  padding: 2rem;
+}
+button {
+  background-color: #00ff90;
+  border: none;
+  padding: 10px 20px;
+  font-size: 1.2rem;
+  color: black;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-bottom: 1rem;
+  transition: transform 0.1s;
+}
+button:hover {
+  transform: scale(1.05);
+}
+#output, #leaderboard {
+  white-space: pre-wrap;
+  background: #1c1c1c;
+  padding: 1rem;
+  border-radius: 10px;
+  margin-top: 1rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+#progressContainer {
+  width: 100%;
+  max-width: 600px;
+  background-color: #2a2a2a;
+  border-radius: 10px;
+  overflow: hidden;
+  margin: auto;
+}
+#progressBar {
+  height: 20px;
+  width: 0%;
+  background-color: #00ff90;
+  border-radius: 10px;
+  transition: width 0.1s;
+}
