@@ -20,19 +20,31 @@
       <p id="authStatus"></p>
     </section>
 
-    <!-- ⛏️ Mining Section -->
+    <!-- ⛏️ Mining & Wallet Section -->
     <section id="miningSection" style="display: none;">
       <p id="balanceDisplay">💰 Balance: 0 coins</p>
       <button id="logoutBtn">Logout</button><br><br>
+
       <button id="startMiningBtn">Start Mining</button>
       <button id="stopMiningBtn">Stop Mining</button>
-
       <div id="progressContainer">
         <div id="progressBar"></div>
       </div>
-
       <pre id="output">Click the button to start.</pre>
+
+      <!-- 🪙 Coin Transfer Section -->
+      <h2>Transfer Coins</h2>
+      <input type="email" id="transferTo" placeholder="Recipient Email" required>
+      <input type="number" id="transferAmount" placeholder="Amount" min="1" required>
+      <button id="sendBtn">Send Coins</button>
+      <p id="transferStatus"></p>
+
+      <!-- 🏆 Leaderboard -->
       <pre id="leaderboard"><strong>🏆 Leaderboard:</strong></pre>
+
+      <!-- 📜 Transaction History -->
+      <h2>📜 Transaction History</h2>
+      <ul id="transactionHistory">Loading...</ul>
     </section>
   </main>
 
