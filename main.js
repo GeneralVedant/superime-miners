@@ -13,11 +13,13 @@ import {
   getFirestore,
   collection,
   setDoc,
+  getDoc,
   doc,
   getDocs,
   query,
   orderBy,
-  limit
+  limit,
+  updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // Firebase Config
@@ -34,7 +36,9 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// 🔐 Auth Functions
+let isMining = false;
+
+// Auth Functions
 function login() {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
@@ -76,11 +80,12 @@ function logout() {
   });
 }
 
-// 🔄 State Listener
-onAuthStateChanged(auth, (user) => {
+// State Listener
+onAuthStateChanged(auth, async (user) => {
   if (user) {
     document.getElementById("authSection").style.display = "none";
     document.getElementById("miningSection").style.display = "block";
+    await showBalance();
     loadLeaderboard();
   } else {
     document.getElementById("authSection").style.display = "block";
@@ -88,81 +93,104 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-// ⛏️ Mining Logic
+// Show user balance
+async function showBalance() {
+  const user = auth.currentUser;
+  if (!user) return;
+  const userDoc = await getDoc(doc(db, "miners", user.uid));
+  const balance = userDoc.exists() ? userDoc.data().balance || 0 : 0;
+  document.getElementById("balanceDisplay").textContent = `💰 Balance: ${balance} coins`;
+}
+
+// Auto-Mining Loop
 async function startMining() {
+  isMining = true;
   const output = document.getElementById("output");
   const progressBar = document.getElementById("progressBar");
   const encoder = new TextEncoder();
   const targetPrefix = '000';
-  let nonce = 0;
-  let startTime = performance.now();
-  let found = false;
-  output.textContent = "Mining started...\n";
-  progressBar.style.width = "0%";
   const maxNonce = 50000;
 
-  while (!found) {
-    const input = 'mine' + nonce;
-    const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(input));
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  while (isMining) {
+    let nonce = 0;
+    let found = false;
+    output.textContent = "Mining...\n";
+    let startTime = performance.now();
 
-    if (hashHex.startsWith(targetPrefix)) {
-      let endTime = performance.now();
-      const time = ((endTime - startTime) / 1000).toFixed(2);
-      const points = 1000 - Math.floor(nonce / 100);
+    while (!found && isMining) {
+      const input = 'mine' + nonce;
+      const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(input));
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-      const user = auth.currentUser;
-      const userId = user.uid;
-      const username = user.email;
+      if (hashHex.startsWith(targetPrefix)) {
+        let endTime = performance.now();
+        const time = ((endTime - startTime) / 1000).toFixed(2);
+        const points = 1000 - Math.floor(nonce / 100);
 
-      output.textContent += `✅ Success!\nNonce: ${nonce}\nHash: ${hashHex}\nTime: ${time}s\nPoints Earned: ${points}`;
+        const user = auth.currentUser;
+        const userId = user.uid;
+        const username = user.displayName || user.email || "Anonymous";
 
-      await setDoc(doc(db, "miners", userId), {
-        name: username,
-        nonce: nonce,
-        time: time,
-        points: points,
-        date: new Date()
-      });
+        const userRef = doc(db, "miners", userId);
+        const userDoc = await getDoc(userRef);
+        let balance = 0;
+        if (userDoc.exists()) {
+          balance = userDoc.data().balance || 0;
+        }
 
-      loadLeaderboard();
-      found = true;
+        const newBalance = balance + points;
+
+        await setDoc(userRef, {
+          name: username,
+          balance: newBalance,
+          lastMined: new Date()
+        });
+
+        output.textContent += `✅ Block mined!\nHash: ${hashHex}\nNonce: ${nonce}\nTime: ${time}s\n+${points} coins\n`;
+        document.getElementById("balanceDisplay").textContent = `💰 Balance: ${newBalance} coins`;
+        loadLeaderboard();
+        found = true;
+      }
+
+      nonce++;
+      if (nonce % 1000 === 0) {
+        const percent = Math.min((nonce / maxNonce) * 100, 100);
+        progressBar.style.width = `${percent}%`;
+        await new Promise(r => setTimeout(r, 1));
+      }
     }
 
-    nonce++;
-    if (nonce % 1000 === 0) {
-      const percent = Math.min((nonce / maxNonce) * 100, 100);
-      progressBar.style.width = `${percent}%`;
-      await new Promise(r => setTimeout(r, 1));
-    }
+    await new Promise(r => setTimeout(r, 500)); // short delay before next block
   }
 }
 
-// 🏆 Leaderboard
+function stopMining() {
+  isMining = false;
+  document.getElementById("output").textContent += "\n🛑 Mining stopped.";
+}
+
+// Leaderboard
 async function loadLeaderboard() {
   const leaderboard = document.getElementById("leaderboard");
   leaderboard.textContent = "🏆 Leaderboard:\n";
 
-  const q = query(collection(db, "miners"), orderBy("points", "desc"), limit(5));
+  const q = query(collection(db, "miners"), orderBy("balance", "desc"), limit(5));
   const querySnapshot = await getDocs(q);
 
   querySnapshot.forEach((docSnap, index) => {
     const data = docSnap.data();
-
     const rank = index + 1;
     const name = data.name || "Unknown";
-    const points = data.points ?? 0;
-    const time = data.time ?? "?";
-
-    leaderboard.textContent += `${rank}. ${name} - ${points} pts (${time}s)\n`;
+    const coins = data.balance ?? 0;
+    leaderboard.textContent += `${rank}. ${name} - ${coins} coins\n`;
   });
 }
 
-
-// 🔓 Bind Buttons to Functions
+// Button Bindings
 document.getElementById("loginBtn").addEventListener("click", login);
 document.getElementById("signupBtn").addEventListener("click", signup);
 document.getElementById("googleLoginBtn").addEventListener("click", googleLogin);
 document.getElementById("logoutBtn").addEventListener("click", logout);
 document.getElementById("startMiningBtn").addEventListener("click", startMining);
+document.getElementById("stopMiningBtn").addEventListener("click", stopMining);
