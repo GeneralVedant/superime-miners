@@ -2,34 +2,39 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Crypto Simulator</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>🪙 Simple Crypto Simulator</h1>
+  <main>
+    <h1>🪙 Simple Crypto Simulator</h1>
 
-  <!-- 🔐 Auth Section -->
-  <div id="authSection">
-    <input type="email" id="email" placeholder="Email"><br><br>
-    <input type="password" id="password" placeholder="Password"><br><br>
-    <button id="loginBtn">Login</button>
-    <button id="signupBtn">Sign Up</button>
-    <button id="googleLoginBtn">Login with Google</button>
-    <p id="authStatus"></p>
-  </div>
+    <!-- 🔐 Authentication Section -->
+    <section id="authSection">
+      <input type="email" id="email" placeholder="Email" autocomplete="username" required><br><br>
+      <input type="password" id="password" placeholder="Password" autocomplete="current-password" required><br><br>
+      <button id="loginBtn">Login</button>
+      <button id="signupBtn">Sign Up</button>
+      <button id="googleLoginBtn">Login with Google</button>
+      <p id="authStatus"></p>
+    </section>
 
-  <!-- ⛏️ Mining Section -->
-  <div id="miningSection" style="display:none;">
-    <p id="balanceDisplay">💰 Balance: 0 coins</p>
-    <button id="logoutBtn">Logout</button><br><br>
-    <button id="startMiningBtn">Start Mining</button>
-    <button id="stopMiningBtn">Stop Mining</button>
-    <div id="progressContainer">
-      <div id="progressBar"></div>
-    </div>
-    <div id="output">Click the button to start.</div>
-    <div id="leaderboard"><strong>Leaderboard:</strong><br></div>
-  </div>
+    <!-- ⛏️ Mining Section -->
+    <section id="miningSection" style="display: none;">
+      <p id="balanceDisplay">💰 Balance: 0 coins</p>
+      <button id="logoutBtn">Logout</button><br><br>
+      <button id="startMiningBtn">Start Mining</button>
+      <button id="stopMiningBtn">Stop Mining</button>
+
+      <div id="progressContainer">
+        <div id="progressBar"></div>
+      </div>
+
+      <pre id="output">Click the button to start.</pre>
+      <pre id="leaderboard"><strong>🏆 Leaderboard:</strong></pre>
+    </section>
+  </main>
 
   <script type="module" src="main.js"></script>
 </body>
