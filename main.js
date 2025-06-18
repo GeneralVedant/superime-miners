@@ -146,11 +146,19 @@ async function loadLeaderboard() {
 
   const q = query(collection(db, "miners"), orderBy("points", "desc"), limit(5));
   const querySnapshot = await getDocs(q);
-  querySnapshot.forEach((doc, index) => {
-    const data = doc.data();
-    leaderboard.textContent += `${index + 1}. ${data.name} - ${data.points} pts (${data.time}s)\n`;
+
+  querySnapshot.forEach((docSnap, index) => {
+    const data = docSnap.data();
+
+    const rank = index + 1;
+    const name = data.name || "Unknown";
+    const points = data.points ?? 0;
+    const time = data.time ?? "?";
+
+    leaderboard.textContent += `${rank}. ${name} - ${points} pts (${time}s)\n`;
   });
 }
+
 
 // 🔓 Bind Buttons to Functions
 document.getElementById("loginBtn").addEventListener("click", login);
