@@ -253,4 +253,30 @@ async function sendCoins() {
 
 // 📜 Load Transactions
 async function loadTransactions() {
-  const list = document.getElementById("transactionHistory
+  const list = document.getElementById("transactionHistory");
+  list.innerHTML = "<strong>📄 Transaction History:</strong><br>";
+
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const q = query(
+    collection(db, "transactions"),
+    orderBy("timestamp", "desc"),
+    limit(10)
+  );
+
+  const querySnapshot = await getDocs(q);
+  querySnapshot.forEach(docSnap => {
+    const data = docSnap.data();
+    const from = data.from || "Unknown";
+    const to = data.to || "Unknown";
+    const amount = data.amount || 0;
+    const time = data.timestamp?.toDate().toLocaleString() || "";
+
+    // Only show transactions related to current user
+    if (from === user.email || to === user.email) {
+      list.innerHTML += `🕓 ${time}: ${from} ➡️ ${to} — ${amount} coins<br>`;
+    }
+  });
+}
+
