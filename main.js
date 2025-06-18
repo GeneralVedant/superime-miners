@@ -31,13 +31,14 @@ const firebaseConfig = {
   appId: "G-N3F9VECF1H"
 };
 
+// Init Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
 let isMining = false;
 
-// Auth Functions
+// 🔐 Auth Functions
 function login() {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
@@ -79,7 +80,7 @@ function logout() {
   });
 }
 
-// State Listener
+// 🔄 User State Listener
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     document.getElementById("authSection").style.display = "none";
@@ -92,16 +93,18 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-// Show user balance
+// 💰 Show user balance
 async function showBalance() {
   const user = auth.currentUser;
   if (!user) return;
+
   const userDoc = await getDoc(doc(db, "miners", user.uid));
-  const balance = userDoc.exists() ? userDoc.data().balance || 0 : 0;
+  const balance = userDoc.exists() ? (userDoc.data().balance || 0) : 0;
+
   document.getElementById("balanceDisplay").textContent = `💰 Balance: ${balance} coins`;
 }
 
-// Auto-Mining Loop
+// ⛏️ Auto-Mining Loop
 async function startMining() {
   isMining = true;
   const output = document.getElementById("output");
@@ -130,11 +133,10 @@ async function startMining() {
         const user = auth.currentUser;
         const userId = user.uid;
         const username = user.displayName || user.email || "Anonymous";
-
         const userRef = doc(db, "miners", userId);
         const userDoc = await getDoc(userRef);
-        let balance = userDoc.exists() ? userDoc.data().balance || 0 : 0;
 
+        let balance = userDoc.exists() ? (userDoc.data().balance || 0) : 0;
         const newBalance = balance + points;
 
         await setDoc(userRef, {
@@ -147,8 +149,10 @@ async function startMining() {
         });
 
         output.textContent += `✅ Block mined!\nHash: ${hashHex}\nNonce: ${nonce}\nTime: ${time}s\n+${points} coins\n`;
-        document.getElementById("balanceDisplay").textContent = `💰 Balance: ${newBalance} coins`;
-        loadLeaderboard();
+
+        await showBalance();
+        await loadLeaderboard();
+
         found = true;
       }
 
@@ -160,16 +164,17 @@ async function startMining() {
       }
     }
 
-    await new Promise(r => setTimeout(r, 500));
+    await new Promise(r => setTimeout(r, 500)); // Delay before next block
   }
 }
 
+// ⛔ Stop mining
 function stopMining() {
   isMining = false;
   document.getElementById("output").textContent += "\n🛑 Mining stopped.";
 }
 
-// Leaderboard
+// 🏆 Load Leaderboard
 async function loadLeaderboard() {
   const leaderboard = document.getElementById("leaderboard");
   leaderboard.textContent = "🏆 Leaderboard:\n";
@@ -186,7 +191,7 @@ async function loadLeaderboard() {
   });
 }
 
-// Button Bindings
+// 🔘 Button Event Bindings
 document.getElementById("loginBtn").addEventListener("click", login);
 document.getElementById("signupBtn").addEventListener("click", signup);
 document.getElementById("googleLoginBtn").addEventListener("click", googleLogin);
