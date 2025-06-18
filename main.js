@@ -18,8 +18,7 @@ import {
   getDocs,
   query,
   orderBy,
-  limit,
-  updateDoc
+  limit
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // Firebase Config
@@ -134,17 +133,17 @@ async function startMining() {
 
         const userRef = doc(db, "miners", userId);
         const userDoc = await getDoc(userRef);
-        let balance = 0;
-        if (userDoc.exists()) {
-          balance = userDoc.data().balance || 0;
-        }
+        let balance = userDoc.exists() ? userDoc.data().balance || 0 : 0;
 
         const newBalance = balance + points;
 
         await setDoc(userRef, {
           name: username,
+          nonce: nonce,
+          time: time,
+          points: points,
           balance: newBalance,
-          lastMined: new Date()
+          date: new Date()
         });
 
         output.textContent += `✅ Block mined!\nHash: ${hashHex}\nNonce: ${nonce}\nTime: ${time}s\n+${points} coins\n`;
@@ -161,7 +160,7 @@ async function startMining() {
       }
     }
 
-    await new Promise(r => setTimeout(r, 500)); // short delay before next block
+    await new Promise(r => setTimeout(r, 500));
   }
 }
 
