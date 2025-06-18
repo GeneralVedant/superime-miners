@@ -155,10 +155,10 @@ async function loadLeaderboard() {
   });
 }
 
-async function sendCoins() {
+async function sendCoins(e) {
+  e.preventDefault();
   const toEmail = document.getElementById("transferTo").value;
   const amount = parseInt(document.getElementById("transferAmount").value);
-  const status = document.getElementById("transferStatus");
   const user = auth.currentUser;
   if (!user || !toEmail || !amount || amount <= 0) return notify("❌ Invalid input");
 
@@ -225,4 +225,4 @@ document.getElementById("googleLoginBtn").addEventListener("click", googleLogin)
 document.getElementById("logoutBtn").addEventListener("click", logout);
 document.getElementById("startMiningBtn").addEventListener("click", startMining);
 document.getElementById("stopMiningBtn").addEventListener("click", stopMining);
-document.getElementById("sendBtn").addEventListener("click", sendCoins);
+document.getElementById("transferForm").addEventListener("submit", sendCoins);
