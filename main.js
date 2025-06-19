@@ -157,30 +157,56 @@ async function loadLeaderboard() {
 
 async function sendCoins(e) {
   e.preventDefault();
+  console.log("sendCoins() triggered");
   const toEmail = document.getElementById("transferTo").value;
   const amount = parseInt(document.getElementById("transferAmount").value);
+  console.log("Recipient:", toEmail, "Amount:", amount);
   const user = auth.currentUser;
-  if (!user || !toEmail || !amount || amount <= 0) return notify("❌ Invalid input");
+  if (!user || !toEmail || !amount || amount <= 0) {
+    return notify("❌ Invalid input");
+  }
 
   const senderRef = doc(db, "miners", user.uid);
   const senderDoc = await getDoc(senderRef);
+  console.log("senderDoc.exists:", senderDoc.exists());
   const senderBalance = senderDoc.exists() ? senderDoc.data().balance || 0 : 0;
+  console.log("Current senderBalance:", senderBalance);
 
-  if (senderBalance < amount) return notify("❌ Insufficient balance");
+  if (senderBalance < amount) {
+    notify("❌ Insufficient balance");
+    return;
+  }
 
+  // Find recipient
   const users = await getDocs(collection(db, "miners"));
+  console.log("Total miners loaded:", users.size);
   let toId = null;
-  users.forEach(doc => {
-    if (doc.data().name === toEmail) toId = doc.id;
+  users.forEach(docSnap => {
+    console.log("checking user:", docSnap.data().name);
+    if (docSnap.data().name === toEmail) {
+      toId = docSnap.id;
+      console.log("Recipient ID found:", toId);
+    }
   });
-  if (!toId) return notify("❌ Recipient not found");
+  if (!toId) {
+    return notify("❌ Recipient not found");
+  }
 
   const recipientRef = doc(db, "miners", toId);
   const recipientDoc = await getDoc(recipientRef);
   const recipientBalance = recipientDoc.exists() ? recipientDoc.data().balance || 0 : 0;
+  console.log("Recipient current balance:", recipientBalance);
 
-  await setDoc(senderRef, { ...senderDoc.data(), balance: senderBalance - amount });
-  await setDoc(recipientRef, { ...recipientDoc.data(), balance: recipientBalance + amount });
+  // Update balances
+  await setDoc(senderRef, {
+    ...senderDoc.data(),
+    balance: senderBalance - amount
+  });
+  await setDoc(recipientRef, {
+    ...recipientDoc.data(),
+    balance: recipientBalance + amount
+  });
+
   await addDoc(collection(db, "transactions"), {
     from: user.email,
     to: toEmail,
@@ -190,9 +216,10 @@ async function sendCoins(e) {
 
   notify("✅ Transfer complete");
   await showBalance();
-  loadLeaderboard();
-  loadTransactions();
+  await loadLeaderboard();
+  await loadTransactions();
 }
+
 
 async function loadTransactions() {
   const list = document.getElementById("transactionHistory");
