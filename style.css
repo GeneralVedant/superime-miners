@@ -6,6 +6,31 @@ body {
   padding: 2rem;
 }
 
+main {
+  max-width: 600px;
+  margin: auto;
+}
+
+section {
+  background: #1a1a1a;
+  padding: 20px;
+  margin-top: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(0,255,144,0.3);
+}
+
+input {
+  padding: 10px;
+  font-size: 1rem;
+  border-radius: 8px;
+  border: none;
+  margin: 10px auto;
+  width: 90%;
+  display: block;
+  background-color: #2a2a2a;
+  color: #00ff90;
+}
+
 button {
   background-color: #00ff90;
   border: none;
@@ -15,32 +40,27 @@ button {
   border-radius: 10px;
   cursor: pointer;
   margin: 0.5rem;
-  transition: transform 0.1s ease, background 0.3s;
+  transition: transform 0.1s ease;
 }
 
 button:hover {
   transform: scale(1.05);
-  background-color: #00cc70;
 }
 
-input {
-  padding: 10px;
-  font-size: 1rem;
-  border-radius: 8px;
-  border: none;
-  margin: 5px;
-  width: 250px;
-  background: #1c1c1c;
-  color: #00ff90;
-  text-align: center;
+a {
+  color: #00ffee;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
-input::placeholder {
-  color: #00ff9066;
+#forgotHelp {
+  display: none;
+  margin-top: 10px;
+  font-size: 0.9rem;
+  color: gold;
 }
 
-#output,
-#leaderboard {
+#output, #leaderboard {
   white-space: pre-wrap;
   background: #1c1c1c;
   padding: 1rem;
@@ -50,7 +70,6 @@ input::placeholder {
   margin-left: auto;
   margin-right: auto;
   text-align: left;
-  overflow-x: auto;
 }
 
 #progressContainer {
@@ -70,31 +89,8 @@ input::placeholder {
   transition: width 0.1s ease-in-out;
 }
 
-#welcomeUser {
-  font-size: 1.4rem;
-  margin-bottom: 10px;
-  color: #00ffd0;
-  font-weight: bold;
-}
-
 #balanceDisplay {
   font-size: 1.2rem;
   margin-bottom: 10px;
   color: gold;
-}
-
-#transferForm {
-  margin: 1rem auto;
-  max-width: 400px;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-#transactionHistory {
-  list-style: none;
-  padding-left: 0;
-  text-align: left;
-  max-width: 600px;
-  margin: 0 auto;
 }
