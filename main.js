@@ -7,7 +7,8 @@ import {
   onAuthStateChanged,
   signOut,
   GoogleAuthProvider,
-  signInWithPopup
+  signInWithPopup,
+  sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
   getFirestore,
@@ -20,6 +21,7 @@ import {
   orderBy,
   limit,
   addDoc,
+  deleteDoc,
   where
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -38,7 +40,8 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 let isMining = false;
 
-// Signup with username, email, and password
+const ADMIN_EMAIL = "youradmin@email.com"; // Replace with your admin email
+
 async function signup() {
   const username = document.getElementById("signupUsername").value.trim();
   const email = document.getElementById("signupEmail").value.trim();
@@ -51,11 +54,8 @@ async function signup() {
     balance: 0
   });
   notify("✅ Account created!");
-  document.getElementById("signupForm").style.display = "none";
-  document.getElementById("loginForm").style.display = "block";
 }
 
-// Login with username + password
 async function login() {
   const username = document.getElementById("loginUsername").value.trim();
   const password = document.getElementById("loginPassword").value;
@@ -81,18 +81,28 @@ function logout() {
   signOut(auth).then(() => notify("🔒 Logged out."));
 }
 
-onAuthStateChanged(auth, async (user) => {
-  document.getElementById("authSection").style.display = user ? "none" : "block";
-  document.getElementById("miningSection").style.display = user ? "block" : "none";
-  if (user) {
-    await showBalance();
-    loadLeaderboard();
-    loadTransactions();
-    const userDoc = await getDoc(doc(db, "miners", user.uid));
-    const username = userDoc.exists() ? userDoc.data().username : "Unknown";
-    document.getElementById("welcomeUser").textContent = `👋 Welcome, ${username}`;
+async function resetPassword() {
+  const email = prompt("Enter your email to reset password:");
+  if (!email) return;
+  try {
+    await sendPasswordResetEmail(auth, email);
+    notify("📧 Password reset email sent.");
+  } catch (err) {
+    notify("❌ " + err.message);
   }
-});
+}
+
+async function banUserByUsername() {
+  const username = prompt("Enter username to ban:");
+  if (!username) return;
+
+  const q = query(collection(db, "miners"), where("username", "==", username));
+  const snap = await getDocs(q);
+  if (snap.empty) return notify("❌ User not found");
+
+  await deleteDoc(doc(db, "miners", snap.docs[0].id));
+  notify("🚫 User banned");
+}
 
 async function showBalance() {
   const user = auth.currentUser;
@@ -227,6 +237,19 @@ async function loadTransactions() {
   });
 }
 
+async function submitComplaint() {
+  const complaint = prompt("Enter your complaint:");
+  const user = auth.currentUser;
+  if (!complaint || !user) return;
+  await addDoc(collection(db, "complaints"), {
+    uid: user.uid,
+    email: user.email,
+    complaint,
+    timestamp: new Date()
+  });
+  notify("📨 Complaint submitted.");
+}
+
 function notify(msg) {
   const toast = document.createElement("div");
   toast.textContent = msg;
@@ -243,14 +266,9 @@ document.getElementById("logoutBtn").addEventListener("click", logout);
 document.getElementById("startMiningBtn").addEventListener("click", startMining);
 document.getElementById("stopMiningBtn").addEventListener("click", stopMining);
 document.getElementById("transferForm").addEventListener("submit", sendCoins);
-
-// Toggle auth forms
-document.getElementById("showSignupBtn").addEventListener("click", () => {
-  document.getElementById("loginForm").style.display = "none";
-  document.getElementById("signupForm").style.display = "block";
+document.getElementById("resetPasswordBtn")?.addEventListener("click", resetPassword);
+document.getElementById("banUserBtn")?.addEventListener("click", () => {
+  if (auth.currentUser?.email === ADMIN_EMAIL) banUserByUsername();
+  else notify("🔐 Admins only");
 });
-
-document.getElementById("backToLoginBtn").addEventListener("click", () => {
-  document.getElementById("signupForm").style.display = "none";
-  document.getElementById("loginForm").style.display = "block";
-});
+document.getElementById("complaintBtn")?.addEventListener("click", submitComplaint);
