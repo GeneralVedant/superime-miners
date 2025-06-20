@@ -57,11 +57,12 @@
       </form>
 
       <!-- 🔨 Admin Panel -->
-      <div id="adminPanel" style="display: none;">
-        <h2>Admin Controls</h2>
+      <div id="adminPanel" style="display: none; background: #222; color: #fff; padding: 10px; margin-top: 20px; border-radius: 10px;">
+        <h2>🔒 Admin Panel</h2>
         <input type="text" id="banUsername" placeholder="Username to Ban">
-        <button id="banUserBtn">Ban User</button>
-        <pre id="scanUsersOutput">🔍 Scanning users...</pre>
+        <button id="banUserBtn">🚫 Ban User</button>
+        <h3>📝 Complaints</h3>
+        <div id="complaintList" style="max-height: 200px; overflow-y: auto; background: #111; padding: 10px; border-radius: 8px;"></div>
       </div>
 
       <!-- 🏆 Leaderboard -->
@@ -72,17 +73,19 @@
       <ul id="transactionHistory">Loading...</ul>
     </section>
 
-    <!-- 📬 Complaint Form -->
+    <!-- 📬 Complaint Button and Form -->
     <button id="complaintBtn" style="position: fixed; bottom: 20px; right: 20px; background-color: red; color: white; padding: 10px; border-radius: 6px;">📢 Report Issue</button>
-    <div id="complaintPopup" style="display:none; position: fixed; bottom: 80px; right: 20px; background: white; padding: 10px; border-radius: 10px; box-shadow: 0 0 10px black;">
-      <textarea id="complaintText" placeholder="Describe your issue..." rows="4" cols="30"></textarea><br>
-      <button id="submitComplaint">Submit</button>
+    <div id="complaintPopup" style="display:none; position: fixed; bottom: 80px; right: 20px; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 0 10px black; width: 300px;">
+      <textarea id="complaintText" placeholder="Describe your issue..." rows="4" style="width: 100%;"></textarea><br>
+      <button id="submitComplaint" style="margin-top: 8px;">Submit</button>
+      <button onclick="document.getElementById('complaintPopup').style.display='none'" style="margin-top: 8px;">Cancel</button>
     </div>
   </main>
 
   <script type="module">
     import "./main.js";
 
+    // Form toggles
     const signupForm = document.getElementById("signupForm");
     const loginForm = document.getElementById("loginForm");
 
@@ -96,6 +99,13 @@
       e.preventDefault();
       loginForm.style.display = "none";
       signupForm.style.display = "block";
+    });
+
+    // Complaint popup toggle
+    const complaintBtn = document.getElementById("complaintBtn");
+    const complaintPopup = document.getElementById("complaintPopup");
+    complaintBtn.addEventListener("click", () => {
+      complaintPopup.style.display = "block";
     });
   </script>
 </body>
