@@ -27,6 +27,14 @@
         <input type="password" id="loginPassword" placeholder="Password" required><br>
         <button id="loginBtn">Login</button>
         <p>Don't have an account? <a href="#" id="switchToSignup">Sign up here</a></p>
+        <p><a href="#" id="forgotHelpLink">Forgot username or email?</a></p>
+        <p id="forgotHelp" style="display: none; font-size: 0.9rem; color: gold;">
+          ➤ If you forgot your <strong>username</strong>, try logging in with your email instead.<br>
+          ➤ If you forgot your <strong>email</strong>, check your inbox or contact support.<br>
+          ➤ Still stuck? Use Google login or sign up again.
+        </p>
+        <input type="email" id="resetEmail" placeholder="Enter your email for password reset"><br>
+        <button id="resetPasswordBtn">Reset Password</button>
       </div>
 
       <button id="googleLoginBtn">Login with Google</button>
@@ -61,10 +69,24 @@
       <!-- 📜 Transaction History -->
       <h2>📜 Transaction History</h2>
       <ul id="transactionHistory">Loading...</ul>
+
+      <!-- 🔒 Admin Panel -->
+      <h2>🔒 Admin Panel</h2>
+      <input type="text" id="banUsername" placeholder="Username to ban">
+      <button id="banUserBtn">Ban User</button>
+      <pre id="adminLog"></pre>
     </section>
   </main>
 
+  <!-- 💬 Complaint Box -->
+  <div id="complaintBox" style="position: fixed; bottom: 10px; right: 10px; background: #111; padding: 10px; border-radius: 8px; border: 1px solid #00ff90; width: 200px;">
+    <strong>📣 Complaint:</strong><br>
+    <textarea id="complaintText" rows="3" style="width: 100%; margin-top: 5px;"></textarea><br>
+    <button id="submitComplaintBtn">Submit</button>
+  </div>
+
   <script type="module">
+    import { sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
     import "./main.js";
 
     // Toggle between signup/login forms
@@ -81,6 +103,34 @@
       e.preventDefault();
       loginForm.style.display = "none";
       signupForm.style.display = "block";
+    });
+
+    // Forgot help toggle
+    document.getElementById("forgotHelpLink").addEventListener("click", (e) => {
+      e.preventDefault();
+      const helpBox = document.getElementById("forgotHelp");
+      helpBox.style.display = helpBox.style.display === "none" ? "block" : "none";
+    });
+
+    // Password reset
+    document.getElementById("resetPasswordBtn").addEventListener("click", async () => {
+      const email = document.getElementById("resetEmail").value;
+      if (!email) return alert("Enter your email to reset password.");
+      try {
+        await sendPasswordResetEmail(auth, email);
+        alert("📧 Reset email sent!");
+      } catch (err) {
+        alert("❌ " + err.message);
+      }
+    });
+
+    // Complaint submit (logs to console for now)
+    document.getElementById("submitComplaintBtn").addEventListener("click", () => {
+      const complaint = document.getElementById("complaintText").value.trim();
+      if (!complaint) return alert("Please enter your complaint.");
+      console.log("Complaint submitted:", complaint);
+      alert("✅ Complaint submitted!");
+      document.getElementById("complaintText").value = "";
     });
   </script>
 </body>
