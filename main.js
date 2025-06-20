@@ -259,16 +259,32 @@ function notify(msg) {
 }
 
 // Button Listeners
-document.getElementById("signupBtn").addEventListener("click", signup);
-document.getElementById("loginBtn").addEventListener("click", login);
-document.getElementById("googleLoginBtn").addEventListener("click", googleLogin);
-document.getElementById("logoutBtn").addEventListener("click", logout);
-document.getElementById("startMiningBtn").addEventListener("click", startMining);
-document.getElementById("stopMiningBtn").addEventListener("click", stopMining);
-document.getElementById("transferForm").addEventListener("submit", sendCoins);
+document.getElementById("signupBtn")?.addEventListener("click", signup);
+document.getElementById("loginBtn")?.addEventListener("click", login);
+document.getElementById("googleLoginBtn")?.addEventListener("click", googleLogin);
+document.getElementById("logoutBtn")?.addEventListener("click", logout);
+document.getElementById("startMiningBtn")?.addEventListener("click", startMining);
+document.getElementById("stopMiningBtn")?.addEventListener("click", stopMining);
+document.getElementById("transferForm")?.addEventListener("submit", sendCoins);
 document.getElementById("resetPasswordBtn")?.addEventListener("click", resetPassword);
 document.getElementById("banUserBtn")?.addEventListener("click", () => {
   if (auth.currentUser?.email === ADMIN_EMAIL) banUserByUsername();
   else notify("🔐 Admins only");
 });
 document.getElementById("complaintBtn")?.addEventListener("click", submitComplaint);
+
+// Auto-display mining section if user is logged in
+onAuthStateChanged(auth, async (user) => {
+  document.getElementById("authSection").style.display = user ? "none" : "block";
+  document.getElementById("miningSection").style.display = user ? "block" : "none";
+  document.getElementById("adminPanel")?.classList.toggle("hidden", user?.email !== ADMIN_EMAIL);
+
+  if (user) {
+    await showBalance();
+    loadLeaderboard();
+    loadTransactions();
+    const userDoc = await getDoc(doc(db, "miners", user.uid));
+    const username = userDoc.exists() ? userDoc.data().username : "Unknown";
+    document.getElementById("welcomeUser").textContent = `👋 Welcome, ${username}`;
+  }
+});
