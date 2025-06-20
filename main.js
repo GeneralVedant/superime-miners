@@ -19,7 +19,8 @@ import {
   query,
   orderBy,
   limit,
-  addDoc
+  addDoc,
+  where
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // Firebase Config
@@ -37,21 +38,34 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 let isMining = false;
 
-// Auth Functions
-function login() {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-  signInWithEmailAndPassword(auth, email, password)
-    .then(() => notify("✅ Logged in!"))
-    .catch(err => notify("❌ " + err.message));
+// Signup with username, email, and password
+async function signup() {
+  const username = document.getElementById("signupUsername").value.trim();
+  const email = document.getElementById("signupEmail").value.trim();
+  const password = document.getElementById("signupPassword").value;
+
+  const userCred = await createUserWithEmailAndPassword(auth, email, password);
+  await setDoc(doc(db, "miners", userCred.user.uid), {
+    username,
+    email,
+    balance: 0
+  });
+  notify("✅ Account created!");
 }
 
-function signup() {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-  createUserWithEmailAndPassword(auth, email, password)
-    .then(() => notify("✅ Account created!"))
-    .catch(err => notify("❌ " + err.message));
+// Login with username + password
+async function login() {
+  const username = document.getElementById("loginUsername").value.trim();
+  const password = document.getElementById("loginPassword").value;
+
+  const q = query(collection(db, "miners"), where("username", "==", username));
+  const snap = await getDocs(q);
+  if (snap.empty) return notify("❌ Username not found");
+
+  const data = snap.docs[0].data();
+  const email = data.email;
+  await signInWithEmailAndPassword(auth, email, password);
+  notify("✅ Logged in as " + username);
 }
 
 function googleLogin() {
@@ -72,6 +86,9 @@ onAuthStateChanged(auth, async (user) => {
     await showBalance();
     loadLeaderboard();
     loadTransactions();
+    const userDoc = await getDoc(doc(db, "miners", user.uid));
+    const username = userDoc.exists() ? userDoc.data().username : "Unknown";
+    document.getElementById("welcomeUser").textContent = `👋 Welcome, ${username}`;
   }
 });
 
@@ -107,14 +124,13 @@ async function startMining() {
         const points = Math.max(10, 1000 - Math.floor(nonce / 100));
         const user = auth.currentUser;
         const userId = user.uid;
-        const username = user.displayName || user.email || "Anonymous";
         const userRef = doc(db, "miners", userId);
         const userDoc = await getDoc(userRef);
-        const balance = userDoc.exists() ? (userDoc.data().balance || 0) : 0;
-        const newBalance = balance + points;
+        const data = userDoc.data();
+        const newBalance = (data.balance || 0) + points;
 
         await setDoc(userRef, {
-          name: username,
+          ...data,
           nonce,
           time,
           points,
@@ -151,75 +167,47 @@ async function loadLeaderboard() {
   const snap = await getDocs(q);
   snap.forEach((doc, i) => {
     const d = doc.data();
-    leaderboard.textContent += `${i + 1}. ${d.name || "Unknown"} - ${d.balance || 0} coins\n`;
+    leaderboard.textContent += `${i + 1}. ${d.username || "Unknown"} - ${d.balance || 0} coins\n`;
   });
 }
 
 async function sendCoins(e) {
   e.preventDefault();
-  console.log("sendCoins() triggered");
-  const toEmail = document.getElementById("transferTo").value;
+  const toUsername = document.getElementById("transferTo").value.trim();
   const amount = parseInt(document.getElementById("transferAmount").value);
-  console.log("Recipient:", toEmail, "Amount:", amount);
   const user = auth.currentUser;
-  if (!user || !toEmail || !amount || amount <= 0) {
-    return notify("❌ Invalid input");
-  }
+  if (!user || !toUsername || !amount || amount <= 0) return notify("❌ Invalid input");
 
   const senderRef = doc(db, "miners", user.uid);
   const senderDoc = await getDoc(senderRef);
-  console.log("senderDoc.exists:", senderDoc.exists());
   const senderBalance = senderDoc.exists() ? senderDoc.data().balance || 0 : 0;
-  console.log("Current senderBalance:", senderBalance);
 
-  if (senderBalance < amount) {
-    notify("❌ Insufficient balance");
-    return;
-  }
+  if (senderBalance < amount) return notify("❌ Insufficient balance");
 
-  // Find recipient
-  const users = await getDocs(collection(db, "miners"));
-  console.log("Total miners loaded:", users.size);
-  let toId = null;
-  users.forEach(docSnap => {
-    console.log("checking user:", docSnap.data().name);
-    if (docSnap.data().name === toEmail) {
-      toId = docSnap.id;
-      console.log("Recipient ID found:", toId);
-    }
-  });
-  if (!toId) {
-    return notify("❌ Recipient not found");
-  }
+  const users = await getDocs(query(collection(db, "miners"), where("username", "==", toUsername)));
+  if (users.empty) return notify("❌ Recipient not found");
+  const toDoc = users.docs[0];
+  const toId = toDoc.id;
+  const toData = toDoc.data();
 
   const recipientRef = doc(db, "miners", toId);
-  const recipientDoc = await getDoc(recipientRef);
-  const recipientBalance = recipientDoc.exists() ? recipientDoc.data().balance || 0 : 0;
-  console.log("Recipient current balance:", recipientBalance);
+  const recipientBalance = toData.balance || 0;
 
-  // Update balances
-  await setDoc(senderRef, {
-    ...senderDoc.data(),
-    balance: senderBalance - amount
-  });
-  await setDoc(recipientRef, {
-    ...recipientDoc.data(),
-    balance: recipientBalance + amount
-  });
+  await setDoc(senderRef, { ...senderDoc.data(), balance: senderBalance - amount });
+  await setDoc(recipientRef, { ...toData, balance: recipientBalance + amount });
 
   await addDoc(collection(db, "transactions"), {
-    from: user.email,
-    to: toEmail,
+    from: senderDoc.data().email,
+    to: toData.email,
     amount,
     timestamp: new Date()
   });
 
   notify("✅ Transfer complete");
   await showBalance();
-  await loadLeaderboard();
-  await loadTransactions();
+  loadLeaderboard();
+  loadTransactions();
 }
-
 
 async function loadTransactions() {
   const list = document.getElementById("transactionHistory");
@@ -246,8 +234,8 @@ function notify(msg) {
 }
 
 // Button Listeners
-document.getElementById("loginBtn").addEventListener("click", login);
 document.getElementById("signupBtn").addEventListener("click", signup);
+document.getElementById("loginBtn").addEventListener("click", login);
 document.getElementById("googleLoginBtn").addEventListener("click", googleLogin);
 document.getElementById("logoutBtn").addEventListener("click", logout);
 document.getElementById("startMiningBtn").addEventListener("click", startMining);
