@@ -15,23 +15,32 @@ button {
   border-radius: 10px;
   cursor: pointer;
   margin: 0.5rem;
-  transition: transform 0.1s ease;
+  transition: transform 0.1s ease, background 0.3s;
 }
 
 button:hover {
   transform: scale(1.05);
+  background-color: #00cc70;
 }
 
 input {
-  padding: 8px;
+  padding: 10px;
   font-size: 1rem;
   border-radius: 8px;
   border: none;
   margin: 5px;
   width: 250px;
+  background: #1c1c1c;
+  color: #00ff90;
+  text-align: center;
 }
 
-#output, #leaderboard {
+input::placeholder {
+  color: #00ff9066;
+}
+
+#output,
+#leaderboard {
   white-space: pre-wrap;
   background: #1c1c1c;
   padding: 1rem;
@@ -41,6 +50,7 @@ input {
   margin-left: auto;
   margin-right: auto;
   text-align: left;
+  overflow-x: auto;
 }
 
 #progressContainer {
@@ -60,8 +70,31 @@ input {
   transition: width 0.1s ease-in-out;
 }
 
+#welcomeUser {
+  font-size: 1.4rem;
+  margin-bottom: 10px;
+  color: #00ffd0;
+  font-weight: bold;
+}
+
 #balanceDisplay {
   font-size: 1.2rem;
   margin-bottom: 10px;
   color: gold;
+}
+
+#transferForm {
+  margin: 1rem auto;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+#transactionHistory {
+  list-style: none;
+  padding-left: 0;
+  text-align: left;
+  max-width: 600px;
+  margin: 0 auto;
 }
