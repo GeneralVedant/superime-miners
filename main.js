@@ -51,6 +51,8 @@ async function signup() {
     balance: 0
   });
   notify("✅ Account created!");
+  document.getElementById("signupForm").style.display = "none";
+  document.getElementById("loginForm").style.display = "block";
 }
 
 // Login with username + password
@@ -241,3 +243,14 @@ document.getElementById("logoutBtn").addEventListener("click", logout);
 document.getElementById("startMiningBtn").addEventListener("click", startMining);
 document.getElementById("stopMiningBtn").addEventListener("click", stopMining);
 document.getElementById("transferForm").addEventListener("submit", sendCoins);
+
+// Toggle auth forms
+document.getElementById("showSignupBtn").addEventListener("click", () => {
+  document.getElementById("loginForm").style.display = "none";
+  document.getElementById("signupForm").style.display = "block";
+});
+
+document.getElementById("backToLoginBtn").addEventListener("click", () => {
+  document.getElementById("signupForm").style.display = "none";
+  document.getElementById("loginForm").style.display = "block";
+});
