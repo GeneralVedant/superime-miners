@@ -12,16 +12,24 @@
 
     <!-- 🔐 Authentication Section -->
     <section id="authSection">
-      <input type="email" id="email" placeholder="Email" autocomplete="username" required><br><br>
-      <input type="password" id="password" placeholder="Password" autocomplete="current-password" required><br><br>
-      <button id="loginBtn">Login</button>
+      <h2>Sign Up</h2>
+      <input type="text" id="signupUsername" placeholder="Username" required><br>
+      <input type="email" id="signupEmail" placeholder="Email (used for recovery/transactions)" required><br>
+      <input type="password" id="signupPassword" placeholder="Password" required><br>
       <button id="signupBtn">Sign Up</button>
+
+      <h2>Login</h2>
+      <input type="text" id="loginUsername" placeholder="Username" required><br>
+      <input type="password" id="loginPassword" placeholder="Password" required><br>
+      <button id="loginBtn">Login</button>
+
       <button id="googleLoginBtn">Login with Google</button>
       <p id="authStatus"></p>
     </section>
 
     <!-- ⛏️ Mining & Wallet Section -->
     <section id="miningSection" style="display: none;">
+      <p id="welcomeUser">👋 Welcome, User</p>
       <p id="balanceDisplay">💰 Balance: 0 coins</p>
       <button id="logoutBtn">Logout</button><br><br>
 
@@ -35,7 +43,7 @@
       <!-- 🪙 Coin Transfer Section -->
       <h2>Transfer Coins</h2>
       <form id="transferForm">
-        <input type="email" id="transferTo" placeholder="Recipient Email" required>
+        <input type="text" id="transferTo" placeholder="Recipient Username" required>
         <input type="number" id="transferAmount" placeholder="Amount" min="1" required>
         <button type="submit" id="sendBtn">Send Coins</button>
         <p id="transferStatus"></p>
