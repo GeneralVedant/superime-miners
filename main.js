@@ -238,16 +238,35 @@ async function loadTransactions() {
 }
 
 async function submitComplaint() {
-  const complaint = prompt("Enter your complaint:");
+  const textarea = document.getElementById("complaintText");
+  const complaint = textarea?.value.trim();
   const user = auth.currentUser;
-  if (!complaint || !user) return;
+  if (!complaint || !user) return notify("❌ Please enter a complaint.");
   await addDoc(collection(db, "complaints"), {
     uid: user.uid,
     email: user.email,
     complaint,
     timestamp: new Date()
   });
+  textarea.value = "";
   notify("📨 Complaint submitted.");
+  document.getElementById("complaintPopup").style.display = "none";
+}
+
+async function loadComplaints() {
+  const container = document.getElementById("complaintList");
+  if (!container) return;
+  container.innerHTML = "Loading complaints...";
+  const snap = await getDocs(query(collection(db, "complaints"), orderBy("timestamp", "desc")));
+  container.innerHTML = "";
+  snap.forEach(doc => {
+    const d = doc.data();
+    const item = document.createElement("div");
+    item.style.borderBottom = "1px solid #555";
+    item.style.padding = "5px 0";
+    item.innerHTML = `<strong>${d.email}</strong><br>${d.complaint}<br><small>${d.timestamp.toDate().toLocaleString()}</small>`;
+    container.appendChild(item);
+  });
 }
 
 function notify(msg) {
@@ -271,13 +290,18 @@ document.getElementById("banUserBtn")?.addEventListener("click", () => {
   if (auth.currentUser?.email === ADMIN_EMAIL) banUserByUsername();
   else notify("🔐 Admins only");
 });
-document.getElementById("complaintBtn")?.addEventListener("click", submitComplaint);
+document.getElementById("complaintBtn")?.addEventListener("click", () => {
+  document.getElementById("complaintPopup").style.display = "block";
+});
+document.getElementById("submitComplaint")?.addEventListener("click", submitComplaint);
 
 // Auto-display mining section if user is logged in
 onAuthStateChanged(auth, async (user) => {
+  const isAdmin = user?.email === ADMIN_EMAIL;
   document.getElementById("authSection").style.display = user ? "none" : "block";
   document.getElementById("miningSection").style.display = user ? "block" : "none";
-  document.getElementById("adminPanel")?.classList.toggle("hidden", user?.email !== ADMIN_EMAIL);
+  document.getElementById("adminPanel")?.classList.toggle("hidden", !isAdmin);
+  document.getElementById("adminPanel")?.style.setProperty("display", isAdmin ? "block" : "none");
 
   if (user) {
     await showBalance();
@@ -286,5 +310,6 @@ onAuthStateChanged(auth, async (user) => {
     const userDoc = await getDoc(doc(db, "miners", user.uid));
     const username = userDoc.exists() ? userDoc.data().username : "Unknown";
     document.getElementById("welcomeUser").textContent = `👋 Welcome, ${username}`;
+    if (isAdmin) loadComplaints();
   }
 });
