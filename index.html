@@ -12,16 +12,22 @@
 
     <!-- 🔐 Authentication Section -->
     <section id="authSection">
-      <h2>Sign Up</h2>
-      <input type="text" id="signupUsername" placeholder="Username" required><br>
-      <input type="email" id="signupEmail" placeholder="Email (used for recovery/transactions)" required><br>
-      <input type="password" id="signupPassword" placeholder="Password" required><br>
-      <button id="signupBtn">Sign Up</button>
+      <div id="signupForm">
+        <h2>Sign Up</h2>
+        <input type="text" id="signupUsername" placeholder="Username" required><br>
+        <input type="email" id="signupEmail" placeholder="Email (used for recovery/transactions)" required><br>
+        <input type="password" id="signupPassword" placeholder="Password" required><br>
+        <button id="signupBtn">Sign Up</button>
+        <p>Already have an account? <a href="#" id="switchToLogin">Login here</a></p>
+      </div>
 
-      <h2>Login</h2>
-      <input type="text" id="loginUsername" placeholder="Username" required><br>
-      <input type="password" id="loginPassword" placeholder="Password" required><br>
-      <button id="loginBtn">Login</button>
+      <div id="loginForm" style="display: none;">
+        <h2>Login</h2>
+        <input type="text" id="loginUsername" placeholder="Username" required><br>
+        <input type="password" id="loginPassword" placeholder="Password" required><br>
+        <button id="loginBtn">Login</button>
+        <p>Don't have an account? <a href="#" id="switchToSignup">Sign up here</a></p>
+      </div>
 
       <button id="googleLoginBtn">Login with Google</button>
       <p id="authStatus"></p>
@@ -58,6 +64,24 @@
     </section>
   </main>
 
-  <script type="module" src="main.js"></script>
+  <script type="module">
+    import "./main.js";
+
+    // Toggle between signup/login forms
+    const signupForm = document.getElementById("signupForm");
+    const loginForm = document.getElementById("loginForm");
+
+    document.getElementById("switchToLogin").addEventListener("click", (e) => {
+      e.preventDefault();
+      signupForm.style.display = "none";
+      loginForm.style.display = "block";
+    });
+
+    document.getElementById("switchToSignup").addEventListener("click", (e) => {
+      e.preventDefault();
+      loginForm.style.display = "none";
+      signupForm.style.display = "block";
+    });
+  </script>
 </body>
 </html>
