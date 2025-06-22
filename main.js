@@ -62,21 +62,21 @@ async function signup() {
 
 async function login() {
   try {
-    const username = document.getElementById("loginUsername").value.trim();
+    const email = document.getElementById("loginUsername").value.trim(); // now email input
     const password = document.getElementById("loginPassword").value;
 
-    const q = query(collection(db, "miners"), where("username", "==", username));
-    const snap = await getDocs(q);
-    if (snap.empty) return notify("❌ Username not found");
+    const userCred = await signInWithEmailAndPassword(auth, email, password);
 
-    const data = snap.docs[0].data();
-    const email = data.email;
-    await signInWithEmailAndPassword(auth, email, password);
+    // Get username from Firestore
+    const docSnap = await getDoc(doc(db, "miners", userCred.user.uid));
+    const username = docSnap.exists() ? docSnap.data().username : "Unknown";
+
     notify("✅ Logged in as " + username);
   } catch (err) {
     notify("❌ " + err.message);
   }
 }
+
 
 
 function googleLogin() {
