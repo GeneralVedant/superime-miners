@@ -47,28 +47,37 @@ async function signup() {
   const email = document.getElementById("signupEmail").value.trim();
   const password = document.getElementById("signupPassword").value;
 
-  const userCred = await createUserWithEmailAndPassword(auth, email, password);
-  await setDoc(doc(db, "miners", userCred.user.uid), {
-    username,
-    email,
-    balance: 0
-  });
-  notify("✅ Account created!");
+  try {
+    const userCred = await createUserWithEmailAndPassword(auth, email, password);
+    await setDoc(doc(db, "miners", userCred.user.uid), {
+      username,
+      email,
+      balance: 0
+    });
+    notify("✅ Account created!");
+  } catch (err) {
+    notify("❌ " + err.message);
+  }
 }
 
 async function login() {
-  const username = document.getElementById("loginUsername").value.trim();
-  const password = document.getElementById("loginPassword").value;
+  try {
+    const username = document.getElementById("loginUsername").value.trim();
+    const password = document.getElementById("loginPassword").value;
 
-  const q = query(collection(db, "miners"), where("username", "==", username));
-  const snap = await getDocs(q);
-  if (snap.empty) return notify("❌ Username not found");
+    const q = query(collection(db, "miners"), where("username", "==", username));
+    const snap = await getDocs(q);
+    if (snap.empty) return notify("❌ Username not found");
 
-  const data = snap.docs[0].data();
-  const email = data.email;
-  await signInWithEmailAndPassword(auth, email, password);
-  notify("✅ Logged in as " + username);
+    const data = snap.docs[0].data();
+    const email = data.email;
+    await signInWithEmailAndPassword(auth, email, password);
+    notify("✅ Logged in as " + username);
+  } catch (err) {
+    notify("❌ " + err.message);
+  }
 }
+
 
 function googleLogin() {
   const provider = new GoogleAuthProvider();
