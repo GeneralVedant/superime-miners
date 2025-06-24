@@ -252,7 +252,6 @@ async function sendCoins(e) {
   await showBalance();
   loadLeaderboard();
   loadTransactions();
-}
 
 async function loadTransactions() {
   const list = document.getElementById("transactionHistory");
