@@ -194,35 +194,59 @@ async function loadLeaderboard() {
 
 async function sendCoins(e) {
   e.preventDefault();
+
   const toUsername = document.getElementById("transferTo").value.trim();
   const amount = parseInt(document.getElementById("transferAmount").value);
   const user = auth.currentUser;
   if (!user || !toUsername || !amount || amount <= 0) return notify("❌ Invalid input");
 
-  const senderRef = doc(db, "miners", user.uid);
-  const senderDoc = await getDoc(senderRef);
-  const senderBalance = senderDoc.exists() ? senderDoc.data().balance || 0 : 0;
+  try {
+    const senderRef = doc(db, "miners", user.uid);
+    const senderSnap = await getDoc(senderRef);
+    if (!senderSnap.exists()) return notify("❌ Sender account not found");
 
-  if (senderBalance < amount) return notify("❌ Insufficient balance");
+    const senderData = senderSnap.data();
+    const senderBalance = senderData.balance || 0;
 
-  const users = await getDocs(query(collection(db, "miners"), where("username", "==", toUsername)));
-  if (users.empty) return notify("❌ Recipient not found");
-  const toDoc = users.docs[0];
-  const toId = toDoc.id;
-  const toData = toDoc.data();
+    // Prevent self-transfer
+    if (toUsername.toLowerCase() === senderData.username?.toLowerCase()) {
+      return notify("❌ Cannot transfer coins to yourself");
+    }
 
-  const recipientRef = doc(db, "miners", toId);
-  const recipientBalance = toData.balance || 0;
+    if (senderBalance < amount) return notify("❌ Insufficient balance");
 
-  await setDoc(senderRef, { ...senderDoc.data(), balance: senderBalance - amount });
-  await setDoc(recipientRef, { ...toData, balance: recipientBalance + amount });
+    const q = query(collection(db, "miners"), where("username", "==", toUsername));
+    const userSnap = await getDocs(q);
+    if (userSnap.empty) return notify("❌ Recipient not found");
 
-  await addDoc(collection(db, "transactions"), {
-    from: senderDoc.data().email,
-    to: toData.email,
-    amount,
-    timestamp: new Date()
-  });
+    const recipientDoc = userSnap.docs[0];
+    const recipientData = recipientDoc.data();
+    const recipientRef = doc(db, "miners", recipientDoc.id);
+
+    const newSenderBalance = senderBalance - amount;
+    const newRecipientBalance = (recipientData.balance || 0) + amount;
+
+    await Promise.all([
+      setDoc(senderRef, { ...senderData, balance: newSenderBalance }),
+      setDoc(recipientRef, { ...recipientData, balance: newRecipientBalance }),
+      addDoc(collection(db, "transactions"), {
+        from: senderData.email,
+        to: recipientData.email,
+        amount,
+        timestamp: new Date()
+      })
+    ]);
+
+    notify("✅ Transfer complete");
+    await showBalance();
+    await loadLeaderboard();
+    await loadTransactions();
+  } catch (err) {
+    console.error(err);
+    notify("❌ Transfer failed: " + err.message);
+  }
+}
+
 
   notify("✅ Transfer complete");
   await showBalance();
